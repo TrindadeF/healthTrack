@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { useRouter } from "next/router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
 import api from "../../services/api";
@@ -16,6 +17,7 @@ const schema = yup.object().shape({
 });
 
 const Login = () => {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const {
     register,
@@ -37,9 +39,16 @@ const Login = () => {
 
       localStorage.setItem("token", token);
 
-      await api.post("/auth/login", { token });
+      const response = await api.post("/auth/login", { token });
+      const user = response.data.user;
 
-      alert("Login realizado com sucesso!");
+      if (user.role === "medico") {
+        router.push("/doctors/index");
+      } else if (user.role === "paciente") {
+        router.push("/patients/dashboard");
+      } else {
+        throw new Error("Papel desconhecido para o usuário.");
+      }
     } catch (err: unknown) {
       setError((err as Error).message || "Erro ao fazer login.");
     }
