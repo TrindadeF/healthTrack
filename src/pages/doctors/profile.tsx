@@ -1,16 +1,33 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import api from "../../services/api";
 import { DoctorProfile } from "@/types/forms";
+import "@/styles/global.css";
 
 const DoctorProfilePage = () => {
   const [profile, setProfile] = useState<DoctorProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await api.get("/doctors/profile");
-        setProfile(response.data);
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("Usuário não autenticado. Redirecionando...");
+          setTimeout(() => router.push("/auth/login"), 2000);
+          return;
+        }
+
+        const response = await api.get("/users", {
+          params: { uid: localStorage.getItem("uid") },
+        });
+
+        if (response.status === 200) {
+          setProfile(response.data);
+        } else {
+          setError("Erro ao buscar dados do usuário.");
+        }
       } catch (err: unknown) {
         if (err instanceof Error) {
           setError(err.message);
@@ -21,28 +38,30 @@ const DoctorProfilePage = () => {
     };
 
     fetchProfile();
-  }, []);
+  }, [router]);
 
   if (error) {
-    return <p style={{ color: "red" }}>{error}</p>;
+    return <p className="error">{error}</p>;
   }
 
   if (!profile) {
-    return <p>Carregando...</p>;
+    return <p className="loading">Carregando...</p>;
   }
 
   return (
-    <div>
-      <h1>Perfil do Médico</h1>
-      <p>
-        <strong>Nome:</strong> {profile.name}
-      </p>
-      <p>
-        <strong>Email:</strong> {profile.email}
-      </p>
-      <p>
-        <strong>Hospital:</strong> {profile.hospital}
-      </p>
+    <div className="container">
+      <h1 className="title">Perfil do Médico</h1>
+      <div className="profileCard">
+        <p>
+          <strong>Nome:</strong> {profile.name}
+        </p>
+        <p>
+          <strong>Email:</strong> {profile.email}
+        </p>
+        <p>
+          <strong>Hospital:</strong> {profile.hospital}
+        </p>
+      </div>
     </div>
   );
 };

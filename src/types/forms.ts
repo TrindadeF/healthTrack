@@ -17,17 +17,19 @@ export interface Diagnosis {
   date: string;
   medications: string[];
   exams: string[];
+  patientId: string;
+  doctorId: string;
 }
 
 export interface DoctorProfile {
-  id: string;
+  uid: string;
   name: string;
   email: string;
   hospital: string;
 }
 
 export interface PatientProfile {
-  id: string;
+  uid: string;
   name: string;
   email: string;
   hospital: string;

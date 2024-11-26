@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import { PatientProfile } from "@/types/forms";
+import "@/styles/global.css";
 
 const PatientDashboard = () => {
   const [profile, setProfile] = useState<PatientProfile | null>(null);
@@ -9,7 +10,7 @@ const PatientDashboard = () => {
   useEffect(() => {
     const fetchPatientProfile = async () => {
       try {
-        const response = await api.get("/patients/profile");
+        const response = await api.get("/users");
         setProfile(response.data);
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -34,14 +35,16 @@ const PatientDashboard = () => {
   if (!profile) {
     return (
       <div className="container">
-        <p>Carregando...</p>
+        <p className="loading">Carregando...</p>
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <h1>Bem-vindo, {profile.name}</h1>
+    <div className="dashboardContainer">
+      <div className="header">
+        <h1 className="title">Bem-vindo, {profile.name}</h1>
+      </div>
       <div className="card">
         <p>
           <strong>Email:</strong> {profile.email}
@@ -58,7 +61,9 @@ const PatientDashboard = () => {
           <p>Sem consultas agendadas.</p>
         )}
       </div>
-      <button>Agendar Consulta</button>
+      <div className="actions">
+        <button className="actionButton">Agendar Consulta</button>
+      </div>
     </div>
   );
 };

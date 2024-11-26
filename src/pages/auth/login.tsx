@@ -19,6 +19,7 @@ const schema = yup.object().shape({
 const Login = () => {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -37,20 +38,33 @@ const Login = () => {
       );
       const token = await userCredential.user.getIdToken();
 
-      localStorage.setItem("token", token);
+      const response = await api.post("/auth/login", {
+        email: data.email,
+        idToken: token,
+      });
 
-      const response = await api.post("/auth/login", { token });
       const user = response.data.user;
+      console.log("Resposta do servidor:", user);
+
+      if (!user || !user.role) {
+        throw new Error("Dados do usuário inválidos ou incompletos.");
+      }
 
       if (user.role === "medico") {
-        router.push("/doctors/index");
+        router.push("/doctors/profile");
       } else if (user.role === "paciente") {
         router.push("/patients/dashboard");
       } else {
         throw new Error("Papel desconhecido para o usuário.");
       }
     } catch (err: unknown) {
-      setError((err as Error).message || "Erro ao fazer login.");
+      console.error("Erro ao fazer login:", err);
+
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Erro inesperado.");
+      }
     }
   };
 
@@ -59,10 +73,10 @@ const Login = () => {
       <h1>Login</h1>
       <form onSubmit={handleSubmit(onSubmit)}>
         <input {...register("email")} placeholder="Email" />
-        <p>{errors.email?.message}</p>
+        <p style={{ color: "red" }}>{errors.email?.message}</p>
 
         <input {...register("password")} type="password" placeholder="Senha" />
-        <p>{errors.password?.message}</p>
+        <p style={{ color: "red" }}>{errors.password?.message}</p>
 
         <button type="submit">Entrar</button>
       </form>

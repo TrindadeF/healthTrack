@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import { Diagnosis } from "@/types/forms";
+import "@/styles/global.css";
 
 const PatientHistoryPage = () => {
   const [history, setHistory] = useState<Diagnosis[]>([]);
@@ -9,7 +10,7 @@ const PatientHistoryPage = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await api.get("/patients/history");
+        const response = await api.get("/user/my-diagnoses");
         setHistory(response.data);
       } catch (err: unknown) {
         if (err instanceof Error) {
@@ -24,15 +25,15 @@ const PatientHistoryPage = () => {
   }, []);
 
   return (
-    <div className="container">
-      <h1>Histórico de Saúde</h1>
+    <div className="historyContainer">
+      <h1 className="title">Histórico de Saúde</h1>
       {error && <p className="error">{error}</p>}
       {history.length === 0 ? (
-        <p>Não há registros de saúde.</p>
+        <p className="emptyMessage">Não há registros de saúde.</p>
       ) : (
-        <ul className="grid">
+        <ul className="historyGrid">
           {history.map((record) => (
-            <li key={record.id} className="card">
+            <li key={record.id} className="historyCard">
               <p>
                 <strong>Descrição:</strong> {record.description}
               </p>
