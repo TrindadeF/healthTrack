@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebase/firebaseConfig";
 import api from "../../services/api";
 import { RegisterFormData } from "@/types/forms";
 import Loader from "../../components/SharedComponents/Loader";
@@ -19,7 +17,7 @@ const schema = yup.object().shape({
   name: yup.string().required("Nome é obrigatório"),
   role: yup
     .string()
-    .oneOf(["doctor", "patient"], "Selecione um papel válido")
+    .oneOf(["medico", "paciente"], "Selecione um papel válido")
     .required("Papel é obrigatório"),
   hospital: yup.string().when("role", (role, schema) => {
     if (typeof role === "string" && role === "doctor") {
@@ -47,24 +45,22 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        data.email,
-        data.password
-      );
-      const user = userCredential.user;
+      const role = data.role === "medico" ? "medico" : "paciente";
 
-      await api.post("/auth/register", {
-        uid: user.uid,
+      const response = await api.post("/auth/register", {
         email: data.email,
-        role: data.role,
+        password: data.password,
         name: data.name,
-        hospital: data.role === "doctor" ? data.hospital : undefined,
+        role,
+        hospital: data.role === "medico" ? data.hospital : undefined,
       });
 
-      setModalMessage("Registro realizado com sucesso!");
+      if (response.status === 201) {
+        setModalMessage("Registro realizado com sucesso!");
+      }
     } catch (err: unknown) {
       console.error("Erro durante o registro:", err);
+      setModalMessage("Ocorreu um erro durante o registro. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -109,13 +105,13 @@ const Register = () => {
           <label className={styles.label}>Papel</label>
           <select {...register("role")} className={styles.select}>
             <option value="">Selecione um papel</option>
-            <option value="doctor">Médico</option>
-            <option value="patient">Paciente</option>
+            <option value="medico">Médico</option>
+            <option value="paciente">Paciente</option>
           </select>
           <p className={styles.errorMessage}>{errors.role?.message}</p>
         </div>
 
-        {role === "doctor" && (
+        {role === "medico" && (
           <div className={styles.formField}>
             <label className={styles.label}>Hospital</label>
             <input

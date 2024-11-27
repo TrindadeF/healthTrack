@@ -1,3 +1,4 @@
+// pages/auth/login.tsx
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -7,6 +8,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
 import api from "../../services/api";
 import { LoginFormData } from "@/types/forms";
+import styles from "./login.module.css";
 
 const schema = yup.object().shape({
   email: yup.string().email("Email inválido").required("Email é obrigatório"),
@@ -18,8 +20,7 @@ const schema = yup.object().shape({
 
 const Login = () => {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-
+  const [error] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -29,59 +30,65 @@ const Login = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    setError(null);
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         data.email,
         data.password
       );
-      const token = await userCredential.user.getIdToken();
+      const idToken = await userCredential.user.getIdToken();
 
-      const response = await api.post("/auth/login", {
-        email: data.email,
-        idToken: token,
-      });
+      const response = await api.post("/auth/login", { idToken });
 
-      const user = response.data.user;
-      console.log("Resposta do servidor:", user);
+      console.log("Usuário logado:", response.data.user);
 
-      if (!user || !user.role) {
-        throw new Error("Dados do usuário inválidos ou incompletos.");
-      }
-
-      if (user.role === "medico") {
-        router.push("/doctors/profile");
-      } else if (user.role === "paciente") {
-        router.push("/patients/dashboard");
+      const userRole = response.data.user.role;
+      if (userRole === "medico") {
+        router.push("/pages/doctors/index");
+      } else if (userRole === "paciente") {
+        router.push("/pages/patients/dashboard");
       } else {
         throw new Error("Papel desconhecido para o usuário.");
       }
-    } catch (err: unknown) {
-      console.error("Erro ao fazer login:", err);
-
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Erro inesperado.");
-      }
+    } catch (error) {
+      console.error("Erro ao fazer login:", error);
     }
   };
 
   return (
-    <div style={{ maxWidth: "400px", margin: "auto" }}>
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <input {...register("email")} placeholder="Email" />
-        <p style={{ color: "red" }}>{errors.email?.message}</p>
-
-        <input {...register("password")} type="password" placeholder="Senha" />
-        <p style={{ color: "red" }}>{errors.password?.message}</p>
-
-        <button type="submit">Entrar</button>
-      </form>
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <h1 className={styles.title}>Login</h1>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div>
+            <label>Email</label>
+            <input
+              {...register("email")}
+              placeholder="Digite seu email"
+              className={styles.input}
+            />
+            {errors.email && (
+              <p className={styles.error}>{errors.email.message}</p>
+            )}
+          </div>
+          <div>
+            <label>Senha</label>
+            <input
+              {...register("password")}
+              type="password"
+              placeholder="Digite sua senha"
+              className={styles.input}
+            />
+            {errors.password && (
+              <p className={styles.error}>{errors.password.message}</p>
+            )}
+          </div>
+          <button type="submit" className={styles.button}>
+            Entrar
+          </button>
+        </form>
+        {error && <p className={styles.error}>{error}</p>}
+      </div>
     </div>
   );
 };

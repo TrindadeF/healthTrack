@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import { PatientProfile } from "@/types/forms";
-import "@/styles/global.css";
 
 const PatientDashboard = () => {
   const [profile, setProfile] = useState<PatientProfile | null>(null);

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import api from "../../services/api";
 import { DoctorProfile } from "@/types/forms";
-import "@/styles/global.css";
 
 const DoctorProfilePage = () => {
   const [profile, setProfile] = useState<DoctorProfile | null>(null);

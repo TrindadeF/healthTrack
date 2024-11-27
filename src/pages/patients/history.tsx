@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import { Diagnosis } from "@/types/forms";
-import "@/styles/global.css";
 
 const PatientHistoryPage = () => {
   const [history, setHistory] = useState<Diagnosis[]>([]);

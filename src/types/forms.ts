@@ -3,7 +3,7 @@ export interface RegisterFormData {
   name: string;
   email: string;
   password: string;
-  role: "doctor" | "patient";
+  role: "medico" | "paciente";
 }
 
 export interface LoginFormData {
