@@ -1,9 +1,12 @@
+// Define tipos reutilizáveis
+export type UserRole = "medico" | "paciente";
+
 export interface RegisterFormData {
   hospital?: string;
   name: string;
   email: string;
   password: string;
-  role: "medico" | "paciente";
+  role: UserRole;
 }
 
 export interface LoginFormData {

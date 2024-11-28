@@ -1,7 +1,8 @@
 import { AppProps } from "next/app";
 import "../styles/global.css";
 import { useEffect } from "react";
-import BackButton from "@/components/SharedComponents/BackButton";
+import { AuthProvider } from "@/context/AuthContext";
+import Toolbar from "@/components/SharedComponents/toolbar";
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
   useEffect(() => {
@@ -10,8 +11,10 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
 
   return (
     <div className="app-container">
-      <BackButton />
-      <Component {...pageProps} />
+      <AuthProvider>
+        <Toolbar />
+        <Component {...pageProps} />
+      </AuthProvider>
     </div>
   );
 };

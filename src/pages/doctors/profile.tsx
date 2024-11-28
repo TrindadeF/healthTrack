@@ -18,7 +18,7 @@ const DoctorProfilePage = () => {
           return;
         }
 
-        const response = await api.get("/users", {
+        const response = await api.get("/user/logged", {
           params: { uid: localStorage.getItem("uid") },
         });
 

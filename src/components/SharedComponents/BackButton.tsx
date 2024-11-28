@@ -12,7 +12,10 @@ const BackButton = () => {
   };
 
   return (
-    <button onClick={handleBack} style={{ padding: "10px", cursor: "pointer" }}>
+    <button
+      onClick={handleBack}
+      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+    >
       Voltar
     </button>
   );
