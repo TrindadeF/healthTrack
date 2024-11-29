@@ -2,7 +2,7 @@ import { AppProps } from "next/app";
 import "../styles/global.css";
 import { useEffect } from "react";
 import { AuthProvider } from "@/context/AuthContext";
-import Toolbar from "@/components/SharedComponents/toolbar";
+import Sidebar from "@/components/SharedComponents/toolbar";
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
   useEffect(() => {
@@ -12,7 +12,7 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
   return (
     <div className="app-container">
       <AuthProvider>
-        <Toolbar />
+        <Sidebar />
         <Component {...pageProps} />
       </AuthProvider>
     </div>

@@ -27,11 +27,13 @@ const DoctorsPage = () => {
         });
         setDoctor(doctorResponse.data);
 
-        const patientsResponse = await api.get("/users/patients", {
+        const patientsResponse = await api.get("/user/patients", {
+          params: { role: "patient" }, 
           headers: { Authorization: `Bearer ${token}` },
         });
         setPatients(patientsResponse.data);
       } catch (err) {
+        console.error("Erro detalhado:", err);
         setError("Erro ao buscar dados do médico ou pacientes.");
       } finally {
         setLoading(false);

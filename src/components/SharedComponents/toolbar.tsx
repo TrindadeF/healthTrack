@@ -1,43 +1,36 @@
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/router";
+import { FaHome, FaUserAlt, FaSignOutAlt, FaBars } from "react-icons/fa";
+import styles from "./toolbar.module.css";
 
-const Toolbar = () => {
+const Toolbar: React.FC = () => {
   const { user, logout } = useAuth();
   const router = useRouter();
 
   if (!user) return null;
 
   return (
-    <div style={styles.toolbar}>
-      <button style={styles.button} onClick={() => router.push("/")}>
-        Home
-      </button>
-      <button style={styles.button} onClick={() => router.push("/profile")}>
-        Perfil
-      </button>
-      <button style={styles.button} onClick={logout}>
-        Logout
-      </button>
+    <div className={styles.sidebarContainer}>
+      <div className={styles.trigger}>
+        <FaBars />
+      </div>
+
+      <div className={styles.sidebar}>
+        <div className={styles.icon} onClick={() => router.push("/")}>
+          <FaHome />
+          <span className={styles.tooltip}>Home</span>
+        </div>
+        <div className={styles.icon} onClick={() => router.push("/profile")}>
+          <FaUserAlt />
+          <span className={styles.tooltip}>Perfil</span>
+        </div>
+        <div className={styles.icon} onClick={logout}>
+          <FaSignOutAlt />
+          <span className={styles.tooltip}>Logout</span>
+        </div>
+      </div>
     </div>
   );
-};
-
-const styles = {
-  toolbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    padding: "10px 20px",
-    background: "#007BFF",
-    color: "white",
-  },
-  button: {
-    background: "transparent",
-    border: "none",
-    color: "white",
-    fontSize: "16px",
-    cursor: "pointer",
-    padding: "5px 10px",
-  },
 };
 
 export default Toolbar;

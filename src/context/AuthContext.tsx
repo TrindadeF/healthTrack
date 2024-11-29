@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(response.data.user);
 
       if (response.data.user.role === "medico") {
-        router.push("/doctors/index");
+        router.push("/doctors");
       } else if (response.data.user.role === "paciente") {
         router.push("/patients/dashboard");
       } else {

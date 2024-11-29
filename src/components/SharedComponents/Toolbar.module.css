@@ -1,0 +1,83 @@
+/* Container geral da barra lateral */
+.sidebarContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: width 0.3s ease; /* Adicionando transição para a expansão do container */
+}
+
+/* Ícone fixo para expandir a barra */
+.trigger {
+  background-color: #007bff;
+  color: white;
+  width: 60px; /* Largura do botão para expandir */
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.trigger:hover {
+  background-color: #0056b3;
+}
+
+/* Barra lateral expansível */
+.sidebar {
+  position: fixed; /* Fixar a barra lateral */
+  top: 0;
+  left: 0; /* Começa na borda esquerda da tela */
+  width: 60px; /* Largura inicial da barra lateral */
+  height: 100%;
+  background-color: #007bff;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 20px; /* Ajuste de espaço superior */
+  transition: width 0.3s ease; /* Transição suave para expandir/retrair */
+  overflow: hidden; /* Esconde o conteúdo quando retraída */
+}
+
+/* Expande a barra lateral ao passar o mouse na área da barra lateral ou no gatilho */
+.sidebarContainer:hover .sidebar {
+  width: 200px; /* Largura da barra quando expandida */
+}
+
+/* Estilo dos ícones */
+.icon {
+  margin: 15px 0;
+  font-size: 24px; /* Tamanho do ícone */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #ffffff; /* Garantir que os ícones tenham cor branca */
+  cursor: pointer;
+  transition: color 0.3s, transform 0.3s;
+}
+
+.icon:hover {
+  color: #ffcc00; /* Cor ao passar o mouse */
+  transform: scale(1.1); /* Efeito de zoom */
+}
+
+/* Tooltip visível apenas na barra expandida */
+.tooltip {
+  margin-top: 5px;
+  font-size: 12px;
+  color: white;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity 0.3s ease;
+}
+
+.sidebarContainer:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
