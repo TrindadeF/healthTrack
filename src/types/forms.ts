@@ -1,12 +1,14 @@
-// Define tipos reutilizáveis
+// Define os papéis de usuário possíveis
 export type UserRole = "medico" | "paciente";
 
 export interface RegisterFormData {
-  hospital?: string;
+  hospital: string;
   name: string;
   email: string;
   password: string;
   role: UserRole;
+  cpf: string;
+  crm: string;
 }
 
 export interface LoginFormData {
@@ -21,7 +23,15 @@ export interface Diagnosis {
   medications: string[];
   exams: string[];
   patientId: string;
-  doctorId: string;
+  doctorId: DoctorDetails;
+  createdAt: Date;
+}
+
+export interface DoctorDetails {
+  id: string;
+  name: string;
+  email: string;
+  hospital: string;
 }
 
 export interface DoctorProfile {
@@ -38,5 +48,4 @@ export interface PatientProfile {
   name: string;
   email: string;
   hospital: string;
-  nextAppointment: string | null;
 }

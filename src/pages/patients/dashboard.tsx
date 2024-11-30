@@ -7,9 +7,14 @@ import styles from "./dashboard.module.css";
 const PatientDashboard = () => {
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<DoctorProfile | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [appointmentDate, setAppointmentDate] = useState<string>("");
+  const [appointmentTime, setAppointmentTime] = useState<string>("");
 
   useEffect(() => {
     const fetchPatientProfile = async () => {
@@ -44,12 +49,42 @@ const PatientDashboard = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setDoctors([]);
+    setSelectedDoctor(null);
+    setAppointmentDate("");
+    setAppointmentTime("");
   };
 
-  const handleScheduleAppointment = (doctorId: string) => {
-    console.log(`Consulta agendada com o médico de ID: ${doctorId}`);
-    alert("Consulta agendada com sucesso!");
-    handleCloseModal();
+  const handleScheduleAppointment = async () => {
+    if (!selectedDoctor || !appointmentDate || !appointmentTime) {
+      alert("Por favor, selecione um médico, data e horário.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Token não encontrado.");
+        return;
+      }
+
+      await api.post(
+        "/user/appoitment",
+        {
+          doctorId: selectedDoctor.id,
+          date: appointmentDate,
+          time: appointmentTime,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      alert("Consulta agendada com sucesso!");
+      handleCloseModal();
+    } catch (err) {
+      console.error("Erro ao agendar consulta:", err);
+      setError("Erro ao agendar consulta.");
+    }
   };
 
   if (loading) {
@@ -108,12 +143,43 @@ const PatientDashboard = () => {
         onClose={handleCloseModal}
         title="Agendar Consulta"
       >
-        {doctors.length === 0 ? (
+        {selectedDoctor ? (
+          <div>
+            <p>
+              <strong>Médico selecionado:</strong> {selectedDoctor.name}
+            </p>
+            <p>
+              <strong>Hospital:</strong> {selectedDoctor.hospital}
+            </p>
+            <label>Data da Consulta</label>
+            <input
+              type="date"
+              className={styles.input}
+              value={appointmentDate}
+              onChange={(e) => setAppointmentDate(e.target.value)}
+            />
+
+            <label>Horário da Consulta</label>
+            <input
+              type="time"
+              className={styles.input}
+              value={appointmentTime}
+              onChange={(e) => setAppointmentTime(e.target.value)}
+            />
+
+            <button
+              className={styles.scheduleButton}
+              onClick={handleScheduleAppointment}
+            >
+              Confirmar Agendamento
+            </button>
+          </div>
+        ) : doctors.length === 0 ? (
           <p className={styles.loading}>Carregando médicos...</p>
         ) : (
           <ul className={styles.doctorList}>
             {doctors.map((doctor) => (
-              <li key={doctor.uid} className={styles.doctorCard}>
+              <li key={doctor.id} className={styles.doctorCard}>
                 <p>
                   <strong>Nome:</strong> {doctor.name}
                 </p>
@@ -124,10 +190,10 @@ const PatientDashboard = () => {
                   <strong>Hospital:</strong> {doctor.hospital}
                 </p>
                 <button
-                  className={styles.scheduleButton}
-                  onClick={() => handleScheduleAppointment(doctor.uid)}
+                  className={styles.selectButton}
+                  onClick={() => setSelectedDoctor(doctor)}
                 >
-                  Escolher
+                  Selecionar
                 </button>
               </li>
             ))}

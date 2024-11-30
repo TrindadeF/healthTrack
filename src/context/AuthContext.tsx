@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import api from "../services/api";
 
 interface User {
+  id: string;
   uid: string;
   email: string;
   name: string;

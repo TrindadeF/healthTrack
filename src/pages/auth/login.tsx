@@ -74,7 +74,6 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Botão para redirecionar para registro */}
         <div className={styles.footer}>
           <p className={styles.footerText}>Ainda não tem uma conta?</p>
           <button

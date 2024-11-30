@@ -8,6 +8,7 @@ import Loader from "../../components/SharedComponents/Loader";
 import Modal from "../../components/SharedComponents/Modal";
 import styles from "../../styles/Form.module.css";
 
+// Validação com yup
 const schema = yup.object().shape({
   email: yup.string().email("Email inválido").required("Email é obrigatório"),
   password: yup
@@ -19,17 +20,25 @@ const schema = yup.object().shape({
     .string()
     .oneOf(["medico", "paciente"], "Selecione um papel válido")
     .required("Papel é obrigatório"),
-  hospital: yup.string().when("role", (role, schema) => {
-    if (typeof role === "string" && role === "doctor") {
-      return schema.required("Hospital é obrigatório para médicos");
-    }
-    return schema.notRequired();
+  hospital: yup.string().when("role", {
+    is: "medico",
+    then: yup.string().required("Hospital é obrigatório para médicos"),
+    otherwise: yup.string().notRequired(),
+  }),
+  cpf: yup.string().when("role", {
+    is: "paciente",
+    then: yup
+      .string()
+      .matches(/^\d{11}$/, "CPF deve ter 11 dígitos numéricos")
+      .required("CPF é obrigatório para pacientes"),
+    otherwise: yup.string().notRequired(),
   }),
 });
 
 const Register = () => {
   const [loading, setLoading] = useState(false);
   const [modalMessage, setModalMessage] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -45,14 +54,13 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const role = data.role === "medico" ? "medico" : "paciente";
-
       const response = await api.post("/auth/register", {
         email: data.email,
         password: data.password,
         name: data.name,
-        role,
+        role: data.role,
         hospital: data.role === "medico" ? data.hospital : undefined,
+        cpf: data.role === "paciente" ? data.cpf : undefined,
       });
 
       if (response.status === 201) {
@@ -120,6 +128,18 @@ const Register = () => {
               className={styles.input}
             />
             <p className={styles.errorMessage}>{errors.hospital?.message}</p>
+          </div>
+        )}
+
+        {role === "paciente" && (
+          <div className={styles.formField}>
+            <label className={styles.label}>CPF</label>
+            <input
+              {...register("cpf")}
+              placeholder="Digite seu CPF"
+              className={styles.input}
+            />
+            <p className={styles.errorMessage}>{errors.cpf?.message}</p>
           </div>
         )}
 

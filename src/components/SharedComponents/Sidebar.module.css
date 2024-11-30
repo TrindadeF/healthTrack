@@ -1,4 +1,3 @@
-/* Container geral da barra lateral */
 .sidebarContainer {
   position: fixed;
   top: 0;
@@ -7,67 +6,47 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: width 0.3s ease; /* Adicionando transição para a expansão do container */
+  background-color: #007bff;
+  color: white;
+  width: 60px;
+  transition: width 0.3s ease;
+  padding-top: 20px; /* Adiciona espaçamento no topo */
 }
 
-/* Ícone fixo para expandir a barra */
+.sidebarContainer:hover {
+  width: 200px;
+}
+
 .trigger {
-  background-color: #007bff;
-  color: white;
-  width: 60px; /* Largura do botão para expandir */
-  height: 60px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  margin-bottom: 20px; /* Espaçamento inferior do gatilho */
+  font-size: 24px;
   cursor: pointer;
-  transition: background-color 0.3s;
 }
 
-.trigger:hover {
-  background-color: #0056b3;
-}
-
-/* Barra lateral expansível */
 .sidebar {
-  position: fixed; /* Fixar a barra lateral */
-  top: 0;
-  left: 0; /* Começa na borda esquerda da tela */
-  width: 60px; /* Largura inicial da barra lateral */
-  height: 100%;
-  background-color: #007bff;
-  color: white;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding-top: 20px; /* Ajuste de espaço superior */
-  transition: width 0.3s ease; /* Transição suave para expandir/retrair */
-  overflow: hidden; /* Esconde o conteúdo quando retraída */
+  gap: 30px; /* Espaçamento consistente entre ícones */
+  width: 100%;
 }
 
-/* Expande a barra lateral ao passar o mouse na área da barra lateral ou no gatilho */
-.sidebarContainer:hover .sidebar {
-  width: 200px; /* Largura da barra quando expandida */
-}
-
-/* Estilo dos ícones */
 .icon {
-  margin: 15px 0;
-  font-size: 24px; /* Tamanho do ícone */
+  position: relative;
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s, color 0.3s;
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #ffffff; /* Garantir que os ícones tenham cor branca */
-  cursor: pointer;
-  transition: color 0.3s, transform 0.3s;
+  gap: 5px; /* Espaçamento entre o ícone e o tooltip */
 }
 
 .icon:hover {
-  color: #ffcc00; /* Cor ao passar o mouse */
-  transform: scale(1.1); /* Efeito de zoom */
+  color: #ffcc00;
+  transform: scale(1.1);
 }
 
-/* Tooltip visível apenas na barra expandida */
 .tooltip {
   margin-top: 5px;
   font-size: 12px;
@@ -75,9 +54,16 @@
   visibility: hidden;
   opacity: 0;
   transition: visibility 0s, opacity 0.3s ease;
+  text-align: center;
 }
 
 .sidebarContainer:hover .tooltip {
   visibility: visible;
   opacity: 1;
+}
+
+/* Adicionado para garantir que os ícones estejam centralizados verticalmente */
+.sidebarContainer,
+.sidebar {
+  justify-content: flex-start;
 }
