@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
-import { PatientProfile } from "@/types/forms";
+import { PatientProfile, DoctorProfile } from "@/types/forms";
+import Modal from "@/components/SharedComponents/Modal";
 import styles from "./dashboard.module.css";
 
 const PatientDashboard = () => {
   const [profile, setProfile] = useState<PatientProfile | null>(null);
+  const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchPatientProfile = async () => {
@@ -26,6 +29,28 @@ const PatientDashboard = () => {
 
     fetchPatientProfile();
   }, []);
+
+  const handleOpenModal = async () => {
+    setIsModalOpen(true);
+    try {
+      const response = await api.get("/user/doctors");
+      setDoctors(response.data);
+    } catch (err) {
+      console.error("Erro ao buscar médicos:", err);
+      setError("Erro ao buscar médicos.");
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setDoctors([]);
+  };
+
+  const handleScheduleAppointment = (doctorId: string) => {
+    console.log(`Consulta agendada com o médico de ID: ${doctorId}`);
+    alert("Consulta agendada com sucesso!");
+    handleCloseModal();
+  };
 
   if (loading) {
     return (
@@ -73,15 +98,42 @@ const PatientDashboard = () => {
         )}
       </div>
       <div className={styles.actions}>
-        <button
-          className={styles.actionButton}
-          onClick={() => {
-            console.log("Abrindo fluxo para agendar consulta...");
-          }}
-        >
+        <button className={styles.actionButton} onClick={handleOpenModal}>
           Agendar Consulta
         </button>
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title="Agendar Consulta"
+      >
+        {doctors.length === 0 ? (
+          <p className={styles.loading}>Carregando médicos...</p>
+        ) : (
+          <ul className={styles.doctorList}>
+            {doctors.map((doctor) => (
+              <li key={doctor.uid} className={styles.doctorCard}>
+                <p>
+                  <strong>Nome:</strong> {doctor.name}
+                </p>
+                <p>
+                  <strong>Email:</strong> {doctor.email}
+                </p>
+                <p>
+                  <strong>Hospital:</strong> {doctor.hospital}
+                </p>
+                <button
+                  className={styles.scheduleButton}
+                  onClick={() => handleScheduleAppointment(doctor.uid)}
+                >
+                  Escolher
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Modal>
     </div>
   );
 };

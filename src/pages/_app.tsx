@@ -2,7 +2,8 @@ import { AppProps } from "next/app";
 import "../styles/global.css";
 import { useEffect } from "react";
 import { AuthProvider } from "@/context/AuthContext";
-import Sidebar from "@/components/SharedComponents/toolbar";
+import Sidebar from "@/components/SharedComponents/Sidebar";
+import "react-toastify/dist/ReactToastify.css";
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
   useEffect(() => {

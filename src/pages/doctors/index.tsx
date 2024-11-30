@@ -2,23 +2,29 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import { DoctorProfile, PatientProfile } from "@/types/forms";
+import Modal from "@/components/SharedComponents/Modal";
+import { toast, ToastContainer } from "react-toastify";
 
 const DoctorsPage = () => {
   const [doctor, setDoctor] = useState<DoctorProfile | null>(null);
   const [patients, setPatients] = useState<PatientProfile[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<PatientProfile | null>(
+    null
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [diagnosis, setDiagnosis] = useState({
+    description: "",
+    medications: "",
+    exams: "",
+  });
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchDoctorData = async () => {
-      setLoading(true);
-      setError(null);
-
       try {
         const token = localStorage.getItem("token");
         if (!token) {
           setError("Usuário não autenticado.");
-          setLoading(false);
           return;
         }
 
@@ -28,39 +34,53 @@ const DoctorsPage = () => {
         setDoctor(doctorResponse.data);
 
         const patientsResponse = await api.get("/user/patients", {
-          params: { role: "patient" }, 
           headers: { Authorization: `Bearer ${token}` },
         });
         setPatients(patientsResponse.data);
       } catch (err) {
-        console.error("Erro detalhado:", err);
         setError("Erro ao buscar dados do médico ou pacientes.");
-      } finally {
-        setLoading(false);
+        toast.error("Erro ao buscar dados. Tente novamente mais tarde.");
       }
     };
 
     fetchDoctorData();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <p className="text-gray-500">Carregando...</p>
-      </div>
-    );
-  }
+  const handleAddDiagnosis = async () => {
+    if (!selectedPatient || !doctor) return;
 
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Usuário não autenticado.");
+        toast.error("Usuário não autenticado. Faça login novamente.");
+        return;
+      }
+
+      await api.post(
+        "/diagnoses/",
+        {
+          patientId: selectedPatient.id,
+          doctorId: doctor.id,
+          description: diagnosis.description,
+          medications: diagnosis.medications.split(","),
+          exams: diagnosis.exams.split(","),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setIsModalOpen(false);
+      toast.success("Diagnóstico adicionado com sucesso!");
+    } catch (err) {
+      setError("Erro ao adicionar diagnóstico.");
+      toast.error("Erro ao adicionar diagnóstico. Tente novamente.");
+    }
+  };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-10">
+      <ToastContainer position="top-right" autoClose={3000} />
+
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         Perfil do Médico
       </h1>
@@ -84,7 +104,7 @@ const DoctorsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {patients.map((patient) => (
             <div
-              key={patient.uid}
+              key={patient.id}
               className="border rounded-lg p-4 shadow-md flex flex-col justify-between"
             >
               <div>
@@ -94,18 +114,13 @@ const DoctorsPage = () => {
                 <p className="text-gray-600">
                   <strong>Email:</strong> {patient.email}
                 </p>
-                <p className="text-gray-600">
-                  <strong>Próxima consulta:</strong>{" "}
-                  {patient.nextAppointment
-                    ? new Date(patient.nextAppointment).toLocaleString()
-                    : "Não agendado"}
-                </p>
               </div>
 
               <button
                 className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
                 onClick={() => {
-                  console.log(`Adicionar diagnóstico para: ${patient.name}`);
+                  setSelectedPatient(patient);
+                  setIsModalOpen(true);
                 }}
               >
                 Adicionar Diagnóstico
@@ -113,6 +128,50 @@ const DoctorsPage = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {isModalOpen && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title="Adicionar Diagnóstico"
+        >
+          <div>
+            <label>Descrição</label>
+            <textarea
+              className="w-full border rounded p-2"
+              value={diagnosis.description}
+              onChange={(e) =>
+                setDiagnosis({ ...diagnosis, description: e.target.value })
+              }
+            ></textarea>
+
+            <label>Medicamentos (separados por vírgula)</label>
+            <input
+              className="w-full border rounded p-2"
+              value={diagnosis.medications}
+              onChange={(e) =>
+                setDiagnosis({ ...diagnosis, medications: e.target.value })
+              }
+            />
+
+            <label>Exames (separados por vírgula)</label>
+            <input
+              className="w-full border rounded p-2"
+              value={diagnosis.exams}
+              onChange={(e) =>
+                setDiagnosis({ ...diagnosis, exams: e.target.value })
+              }
+            />
+
+            <button
+              className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              onClick={handleAddDiagnosis}
+            >
+              Salvar Diagnóstico
+            </button>
+          </div>
+        </Modal>
       )}
     </div>
   );

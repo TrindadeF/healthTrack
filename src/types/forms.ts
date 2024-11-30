@@ -25,6 +25,7 @@ export interface Diagnosis {
 }
 
 export interface DoctorProfile {
+  id: string;
   uid: string;
   name: string;
   email: string;
@@ -32,6 +33,7 @@ export interface DoctorProfile {
 }
 
 export interface PatientProfile {
+  id: string;
   uid: string;
   name: string;
   email: string;

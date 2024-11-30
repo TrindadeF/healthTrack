@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useAuth } from "../../context/AuthContext";
+import { useRouter } from "next/router";
 import styles from "./login.module.css";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/firebase/firebaseConfig";
@@ -16,6 +17,7 @@ const schema = yup.object().shape({
 
 const Login = () => {
   const { login } = useAuth();
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -37,6 +39,10 @@ const Login = () => {
     } catch (error) {
       console.error("Erro ao fazer login:", error);
     }
+  };
+
+  const handleRedirectToRegister = () => {
+    router.push("/auth/register");
   };
 
   return (
@@ -67,6 +73,18 @@ const Login = () => {
             Entrar
           </button>
         </form>
+
+        {/* Botão para redirecionar para registro */}
+        <div className={styles.footer}>
+          <p className={styles.footerText}>Ainda não tem uma conta?</p>
+          <button
+            type="button"
+            onClick={handleRedirectToRegister}
+            className={styles.registerButton}
+          >
+            Registre-se
+          </button>
+        </div>
       </div>
     </div>
   );
