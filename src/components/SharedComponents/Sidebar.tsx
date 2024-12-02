@@ -19,7 +19,7 @@ const Sidebar: React.FC = () => {
   const userProfileRoute =
     user.role === "paciente" ? "/patients/dashboard" : "/doctors/profile";
   const userHistoryRoute =
-    user.role === "paciente" ? "/patients/history" : "/doctors/index";
+    user.role === "paciente" ? "/patients/history" : "/doctors/";
   const userNotificationsRoute =
     user.role === "paciente"
       ? "/patients/notifications"

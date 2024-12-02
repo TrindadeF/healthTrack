@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import api from "../../services/api";
@@ -12,19 +13,20 @@ const DoctorsPage = () => {
     null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [diagnoses, setDiagnoses] = useState<any[]>([]);
+  const [currentDiagnosis, setCurrentDiagnosis] = useState<any | null>(null);
   const [diagnosis, setDiagnosis] = useState({
     description: "",
     medications: "",
     exams: "",
   });
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDoctorData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          setError("Usuário não autenticado.");
+          toast.error("Usuário não autenticado.");
           return;
         }
 
@@ -37,8 +39,15 @@ const DoctorsPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPatients(patientsResponse.data);
+
+        const diagnosesResponse = await api.get(
+          `/diagnoses/${doctorResponse.data.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setDiagnoses(diagnosesResponse.data);
       } catch (err) {
-        setError("Erro ao buscar dados do médico ou pacientes.");
         toast.error("Erro ao buscar dados. Tente novamente mais tarde.");
       }
     };
@@ -52,12 +61,11 @@ const DoctorsPage = () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        setError("Usuário não autenticado.");
         toast.error("Usuário não autenticado. Faça login novamente.");
         return;
       }
 
-      await api.post(
+      const response = await api.post(
         "/diagnoses/",
         {
           patientId: selectedPatient.id,
@@ -69,11 +77,72 @@ const DoctorsPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      setDiagnoses([response.data.diagnosis, ...diagnoses]);
       setIsModalOpen(false);
       toast.success("Diagnóstico adicionado com sucesso!");
     } catch (err) {
-      setError("Erro ao adicionar diagnóstico.");
       toast.error("Erro ao adicionar diagnóstico. Tente novamente.");
+    }
+  };
+
+  const handleDeleteDiagnosis = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Usuário não autenticado. Faça login novamente.");
+        return;
+      }
+
+      await api.delete(`/diagnoses/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setDiagnoses(diagnoses.filter((diag) => diag.id !== id));
+      toast.success("Diagnóstico excluído com sucesso!");
+    } catch (err) {
+      toast.error("Erro ao excluir diagnóstico.");
+    }
+  };
+
+  const handleEditDiagnosis = (diagnosis: any) => {
+    setCurrentDiagnosis(diagnosis);
+    setDiagnosis({
+      description: diagnosis.description,
+      medications: diagnosis.medications.join(", "),
+      exams: diagnosis.exams.join(", "),
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleUpdateDiagnosis = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token || !currentDiagnosis) {
+        toast.error("Erro ao autenticar ou encontrar o diagnóstico.");
+        return;
+      }
+
+      const response = await api.put(
+        `/diagnoses/${currentDiagnosis.id}`,
+        {
+          description: diagnosis.description,
+          medications: diagnosis.medications.split(","),
+          exams: diagnosis.exams.split(","),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setDiagnoses(
+        diagnoses.map((diag) =>
+          diag.id === currentDiagnosis.id ? response.data.diagnosis : diag
+        )
+      );
+
+      setIsModalOpen(false);
+      setCurrentDiagnosis(null);
+      toast.success("Diagnóstico atualizado com sucesso!");
+    } catch (err) {
+      toast.error("Erro ao atualizar diagnóstico.");
     }
   };
 
@@ -97,34 +166,36 @@ const DoctorsPage = () => {
         </div>
       )}
 
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Pacientes</h2>
-      {patients.length === 0 ? (
-        <p className="text-gray-500">Nenhum paciente associado.</p>
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Diagnósticos</h2>
+      {diagnoses.length === 0 ? (
+        <p className="text-gray-500">Nenhum diagnóstico registrado.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {patients.map((patient) => (
+          {diagnoses.map((diag) => (
             <div
-              key={patient.id}
+              key={diag.id}
               className="border rounded-lg p-4 shadow-md flex flex-col justify-between"
             >
-              <div>
-                <h3 className="text-lg font-semibold text-blue-500">
-                  {patient.name}
-                </h3>
-                <p className="text-gray-600">
-                  <strong>Email:</strong> {patient.email}
-                </p>
+              <p>
+                <strong>Descrição:</strong> {diag.description}
+              </p>
+              <p>
+                <strong>Paciente:</strong> {diag.patientId}
+              </p>
+              <div className="flex justify-between mt-4">
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+                  onClick={() => handleEditDiagnosis(diag)}
+                >
+                  Editar
+                </button>
+                <button
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                  onClick={() => handleDeleteDiagnosis(diag.id)}
+                >
+                  Excluir
+                </button>
               </div>
-
-              <button
-                className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-                onClick={() => {
-                  setSelectedPatient(patient);
-                  setIsModalOpen(true);
-                }}
-              >
-                Adicionar Diagnóstico
-              </button>
             </div>
           ))}
         </div>
@@ -133,8 +204,13 @@ const DoctorsPage = () => {
       {isModalOpen && (
         <Modal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title="Adicionar Diagnóstico"
+          onClose={() => {
+            setIsModalOpen(false);
+            setCurrentDiagnosis(null);
+          }}
+          title={
+            currentDiagnosis ? "Editar Diagnóstico" : "Adicionar Diagnóstico"
+          }
         >
           <div>
             <label>Descrição</label>
@@ -166,9 +242,13 @@ const DoctorsPage = () => {
 
             <button
               className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-              onClick={handleAddDiagnosis}
+              onClick={
+                currentDiagnosis ? handleUpdateDiagnosis : handleAddDiagnosis
+              }
             >
-              Salvar Diagnóstico
+              {currentDiagnosis
+                ? "Atualizar Diagnóstico"
+                : "Salvar Diagnóstico"}
             </button>
           </div>
         </Modal>

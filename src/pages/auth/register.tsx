@@ -1,14 +1,13 @@
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
 import api from "../../services/api";
-import { RegisterFormData } from "@/types/forms";
-import Loader from "../../components/SharedComponents/Loader";
-import Modal from "../../components/SharedComponents/Modal";
-import styles from "../../styles/Form.module.css";
+import styles from "./register.module.css";
+import { toast } from "react-toastify";
+import { useRouter } from "next/router";
 
-// Validação com yup
 const schema = yup.object().shape({
   email: yup.string().email("Email inválido").required("Email é obrigatório"),
   password: yup
@@ -21,36 +20,44 @@ const schema = yup.object().shape({
     .oneOf(["medico", "paciente"], "Selecione um papel válido")
     .required("Papel é obrigatório"),
   hospital: yup.string().when("role", {
-    is: "medico",
-    then: yup.string().required("Hospital é obrigatório para médicos"),
-    otherwise: yup.string().notRequired(),
+    is: (role: string) => role === "medico",
+    then: (schema) => schema.required("Hospital é obrigatório para médicos"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
+  crm: yup.string().when("role", {
+    is: (role: string) => role === "medico",
+    then: (schema) =>
+      schema
+        .matches(/^\d+$/, "CRM deve conter apenas números")
+        .required("CRM é obrigatório para médicos"),
+    otherwise: (schema) => schema.notRequired(),
   }),
   cpf: yup.string().when("role", {
-    is: "paciente",
-    then: yup
-      .string()
-      .matches(/^\d{11}$/, "CPF deve ter 11 dígitos numéricos")
-      .required("CPF é obrigatório para pacientes"),
-    otherwise: yup.string().notRequired(),
+    is: (role: string) => role === "paciente",
+    then: (schema) =>
+      schema
+        .matches(/^\d{11}$/, "CPF deve ter 11 dígitos numéricos")
+        .required("CPF é obrigatório para pacientes"),
+    otherwise: (schema) => schema.notRequired(),
   }),
 });
 
-const Register = () => {
+const RegisterForm = () => {
   const [loading, setLoading] = useState(false);
-  const [modalMessage, setModalMessage] = useState<string | null>(null);
+  const router = useRouter();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
     watch,
+    formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
   });
 
   const role = watch("role");
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: any) => {
     setLoading(true);
 
     try {
@@ -60,28 +67,34 @@ const Register = () => {
         name: data.name,
         role: data.role,
         hospital: data.role === "medico" ? data.hospital : undefined,
+        crm: data.role === "medico" ? data.crm : undefined,
         cpf: data.role === "paciente" ? data.cpf : undefined,
       });
 
       if (response.status === 201) {
-        setModalMessage("Registro realizado com sucesso!");
+        toast.success("Registro realizado com sucesso!");
       }
-    } catch (err: unknown) {
-      console.error("Erro durante o registro:", err);
-      setModalMessage("Ocorreu um erro durante o registro. Tente novamente.");
+    } catch (err: any) {
+      if (err.response?.data?.error) {
+        toast.error(err.response.data.error);
+      } else {
+        toast.error("Erro ao registrar. Tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className={styles.formContainer}>
-      <h1 className={styles.formTitle}>Registrar</h1>
-      <form onSubmit={handleSubmit(onSubmit)}>
+    <div className={styles.container}>
+      <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
+        <h2 className={styles.title}>Registro</h2>
+
         <div className={styles.formField}>
-          <label className={styles.label}>Email</label>
+          <label>Email</label>
           <input
             {...register("email")}
+            type="email"
             placeholder="Digite seu email"
             className={styles.input}
           />
@@ -89,7 +102,7 @@ const Register = () => {
         </div>
 
         <div className={styles.formField}>
-          <label className={styles.label}>Senha</label>
+          <label>Senha</label>
           <input
             {...register("password")}
             type="password"
@@ -100,9 +113,10 @@ const Register = () => {
         </div>
 
         <div className={styles.formField}>
-          <label className={styles.label}>Nome</label>
+          <label>Nome</label>
           <input
             {...register("name")}
+            type="text"
             placeholder="Digite seu nome"
             className={styles.input}
           />
@@ -110,9 +124,9 @@ const Register = () => {
         </div>
 
         <div className={styles.formField}>
-          <label className={styles.label}>Papel</label>
-          <select {...register("role")} className={styles.select}>
-            <option value="">Selecione um papel</option>
+          <label>Papel</label>
+          <select {...register("role")} className={styles.input}>
+            <option value="">Selecione</option>
             <option value="medico">Médico</option>
             <option value="paciente">Paciente</option>
           </select>
@@ -120,20 +134,31 @@ const Register = () => {
         </div>
 
         {role === "medico" && (
-          <div className={styles.formField}>
-            <label className={styles.label}>Hospital</label>
-            <input
-              {...register("hospital")}
-              placeholder="Digite o nome do hospital"
-              className={styles.input}
-            />
-            <p className={styles.errorMessage}>{errors.hospital?.message}</p>
-          </div>
+          <>
+            <div className={styles.formField}>
+              <label>Hospital</label>
+              <input
+                {...register("hospital")}
+                placeholder="Digite o nome do hospital"
+                className={styles.input}
+              />
+              <p className={styles.errorMessage}>{errors.hospital?.message}</p>
+            </div>
+            <div className={styles.formField}>
+              <label>CRM</label>
+              <input
+                {...register("crm")}
+                placeholder="Digite seu CRM"
+                className={styles.input}
+              />
+              <p className={styles.errorMessage}>{errors.crm?.message}</p>
+            </div>
+          </>
         )}
 
         {role === "paciente" && (
           <div className={styles.formField}>
-            <label className={styles.label}>CPF</label>
+            <label>CPF</label>
             <input
               {...register("cpf")}
               placeholder="Digite seu CPF"
@@ -143,30 +168,19 @@ const Register = () => {
           </div>
         )}
 
-        <button type="submit" className={styles.button}>
-          Registrar
+        <button type="submit" className={styles.button} disabled={loading}>
+          {loading ? "Registrando..." : "Registrar"}
+        </button>
+        <button
+          type="button"
+          className={`${styles.button} ${styles.secondaryButton}`}
+          onClick={() => router.push("/auth/login")}
+        >
+          Ir para Login
         </button>
       </form>
-
-      {loading && (
-        <div className={styles.loaderWrapper}>
-          <Loader />
-        </div>
-      )}
-
-      {modalMessage && (
-        <div className={styles.modalWrapper}>
-          <Modal
-            title="Sucesso"
-            isOpen={true}
-            onClose={() => setModalMessage(null)}
-          >
-            <p>{modalMessage}</p>
-          </Modal>
-        </div>
-      )}
     </div>
   );
 };
 
-export default Register;
+export default RegisterForm;
