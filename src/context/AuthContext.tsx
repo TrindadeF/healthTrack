@@ -33,11 +33,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setToken(idToken);
 
       const response = await api.post("/auth/login", { idToken });
-      setUser(response.data.user);
+      const user = response.data.user;
 
-      if (response.data.user.role === "medico") {
+      setUser(user);
+
+      if (user.role === "medico") {
+        localStorage.setItem("doctorId", user.id);
         router.push("/doctors");
-      } else if (response.data.user.role === "paciente") {
+      } else if (user.role === "paciente") {
         router.push("/patients/dashboard");
       } else {
         throw new Error("Papel desconhecido.");

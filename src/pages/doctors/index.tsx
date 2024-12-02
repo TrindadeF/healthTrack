@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import { DoctorProfile, PatientProfile } from "@/types/forms";
 import Modal from "@/components/SharedComponents/Modal";
 import { toast, ToastContainer } from "react-toastify";
+import styles from "./index.module.css";
 
 const DoctorsPage = () => {
   const [doctor, setDoctor] = useState<DoctorProfile | null>(null);
@@ -12,17 +13,17 @@ const DoctorsPage = () => {
   const [selectedPatient, setSelectedPatient] = useState<PatientProfile | null>(
     null
   );
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [diagnoses, setDiagnoses] = useState<any[]>([]);
-  const [currentDiagnosis, setCurrentDiagnosis] = useState<any | null>(null);
-  const [diagnosis, setDiagnosis] = useState({
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [diagnosisForm, setDiagnosisForm] = useState({
     description: "",
     medications: "",
     exams: "",
   });
+  const [currentDiagnosis, setCurrentDiagnosis] = useState<any | null>(null);
 
   useEffect(() => {
-    const fetchDoctorData = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -39,21 +40,34 @@ const DoctorsPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPatients(patientsResponse.data);
-
-        const diagnosesResponse = await api.get(
-          `/diagnoses/${doctorResponse.data.id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setDiagnoses(diagnosesResponse.data);
       } catch (err) {
         toast.error("Erro ao buscar dados. Tente novamente mais tarde.");
       }
     };
 
-    fetchDoctorData();
+    fetchData();
   }, []);
+
+  const handleOpenPatientModal = async (patient: PatientProfile) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Usuário não autenticado.");
+        return;
+      }
+
+      setSelectedPatient(patient);
+
+      const response = await api.get(`/diagnoses/${patient.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setDiagnoses(response.data);
+      setIsModalOpen(true);
+    } catch (err) {
+      toast.error("Erro ao buscar diagnósticos do paciente.");
+    }
+  };
 
   const handleAddDiagnosis = async () => {
     if (!selectedPatient || !doctor) return;
@@ -61,7 +75,7 @@ const DoctorsPage = () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        toast.error("Usuário não autenticado. Faça login novamente.");
+        toast.error("Usuário não autenticado.");
         return;
       }
 
@@ -70,18 +84,18 @@ const DoctorsPage = () => {
         {
           patientId: selectedPatient.id,
           doctorId: doctor.id,
-          description: diagnosis.description,
-          medications: diagnosis.medications.split(","),
-          exams: diagnosis.exams.split(","),
+          description: diagnosisForm.description,
+          medications: diagnosisForm.medications.split(","),
+          exams: diagnosisForm.exams.split(","),
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setDiagnoses([response.data.diagnosis, ...diagnoses]);
-      setIsModalOpen(false);
+      setDiagnosisForm({ description: "", medications: "", exams: "" });
       toast.success("Diagnóstico adicionado com sucesso!");
     } catch (err) {
-      toast.error("Erro ao adicionar diagnóstico. Tente novamente.");
+      toast.error("Erro ao adicionar diagnóstico.");
     }
   };
 
@@ -89,7 +103,7 @@ const DoctorsPage = () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        toast.error("Usuário não autenticado. Faça login novamente.");
+        toast.error("Usuário não autenticado.");
         return;
       }
 
@@ -106,12 +120,11 @@ const DoctorsPage = () => {
 
   const handleEditDiagnosis = (diagnosis: any) => {
     setCurrentDiagnosis(diagnosis);
-    setDiagnosis({
+    setDiagnosisForm({
       description: diagnosis.description,
       medications: diagnosis.medications.join(", "),
       exams: diagnosis.exams.join(", "),
     });
-    setIsModalOpen(true);
   };
 
   const handleUpdateDiagnosis = async () => {
@@ -125,9 +138,9 @@ const DoctorsPage = () => {
       const response = await api.put(
         `/diagnoses/${currentDiagnosis.id}`,
         {
-          description: diagnosis.description,
-          medications: diagnosis.medications.split(","),
-          exams: diagnosis.exams.split(","),
+          description: diagnosisForm.description,
+          medications: diagnosisForm.medications.split(","),
+          exams: diagnosisForm.exams.split(","),
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -138,8 +151,8 @@ const DoctorsPage = () => {
         )
       );
 
-      setIsModalOpen(false);
       setCurrentDiagnosis(null);
+      setDiagnosisForm({ description: "", medications: "", exams: "" });
       toast.success("Diagnóstico atualizado com sucesso!");
     } catch (err) {
       toast.error("Erro ao atualizar diagnóstico.");
@@ -150,106 +163,165 @@ const DoctorsPage = () => {
     <div className="container mx-auto p-10">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">
-        Perfil do Médico
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">Pacientes</h1>
 
-      {doctor && (
-        <div className="border rounded-lg p-6 shadow-md mb-6">
-          <h2 className="text-xl font-semibold text-blue-600">{doctor.name}</h2>
-          <p className="text-gray-600">
-            <strong>Hospital:</strong> {doctor.hospital}
-          </p>
-          <p className="text-gray-600">
-            <strong>Email:</strong> {doctor.email}
-          </p>
-        </div>
-      )}
-
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Diagnósticos</h2>
-      {diagnoses.length === 0 ? (
-        <p className="text-gray-500">Nenhum diagnóstico registrado.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {diagnoses.map((diag) => (
-            <div
-              key={diag.id}
-              className="border rounded-lg p-4 shadow-md flex flex-col justify-between"
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {patients.map((patient) => (
+          <div
+            key={patient.id}
+            className="border rounded-lg p-4 shadow-md flex flex-col justify-between"
+          >
+            <h3 className="text-lg font-semibold text-blue-500">
+              {patient.name}
+            </h3>
+            <p className="text-gray-600">
+              <strong>Email:</strong> {patient.email}
+            </p>
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+              onClick={() => handleOpenPatientModal(patient)}
             >
-              <p>
-                <strong>Descrição:</strong> {diag.description}
-              </p>
-              <p>
-                <strong>Paciente:</strong> {diag.patientId}
-              </p>
-              <div className="flex justify-between mt-4">
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-                  onClick={() => handleEditDiagnosis(diag)}
-                >
-                  Editar
-                </button>
-                <button
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
-                  onClick={() => handleDeleteDiagnosis(diag.id)}
-                >
-                  Excluir
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              Visualizar Detalhes
+            </button>
+          </div>
+        ))}
+      </div>
 
-      {isModalOpen && (
+      {isModalOpen && selectedPatient && (
         <Modal
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
-            setCurrentDiagnosis(null);
+            setSelectedPatient(null);
+            setDiagnoses([]);
           }}
-          title={
-            currentDiagnosis ? "Editar Diagnóstico" : "Adicionar Diagnóstico"
-          }
+          title={`Detalhes de ${selectedPatient?.name || "Paciente"}`}
         >
-          <div>
-            <label>Descrição</label>
-            <textarea
-              className="w-full border rounded p-2"
-              value={diagnosis.description}
-              onChange={(e) =>
-                setDiagnosis({ ...diagnosis, description: e.target.value })
-              }
-            ></textarea>
+          <div className={styles.modalContainer}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Informações do Paciente</h2>
+              <button
+                className={styles.closeButton}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setSelectedPatient(null);
+                  setDiagnoses([]);
+                }}
+              >
+                ✕
+              </button>
+            </div>
 
-            <label>Medicamentos (separados por vírgula)</label>
-            <input
-              className="w-full border rounded p-2"
-              value={diagnosis.medications}
-              onChange={(e) =>
-                setDiagnosis({ ...diagnosis, medications: e.target.value })
-              }
-            />
+            <div className={styles.modalContent}>
+              {selectedPatient ? (
+                <div className={styles.patientInfo}>
+                  <p>
+                    <strong>Nome:</strong> {selectedPatient.name}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {selectedPatient.email}
+                  </p>
+                </div>
+              ) : (
+                <p className={styles.noPatientInfo}>
+                  Informações do paciente não disponíveis.
+                </p>
+              )}
 
-            <label>Exames (separados por vírgula)</label>
-            <input
-              className="w-full border rounded p-2"
-              value={diagnosis.exams}
-              onChange={(e) =>
-                setDiagnosis({ ...diagnosis, exams: e.target.value })
-              }
-            />
+              <h3>Diagnósticos</h3>
+              {diagnoses.length > 0 ? (
+                <ul className={styles.diagnosisList}>
+                  {diagnoses.map((diag) => (
+                    <li key={diag.id} className={styles.diagnosisCard}>
+                      <p>
+                        <strong>Descrição:</strong> {diag.description}
+                      </p>
+                      <p>
+                        <strong>Medicamentos:</strong>{" "}
+                        {diag.medications.join(", ")}
+                      </p>
+                      <p>
+                        <strong>Exames:</strong> {diag.exams.join(", ")}
+                      </p>
+                      <div className={styles.diagnosisActions}>
+                        <button
+                          className={`${styles.actionButton} ${styles.editButton}`}
+                          onClick={() => handleEditDiagnosis(diag)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className={`${styles.actionButton} ${styles.deleteButton}`}
+                          onClick={() => handleDeleteDiagnosis(diag.id)}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.noDiagnosisMessage}>
+                  Este paciente ainda não possui diagnósticos registrados.
+                </p>
+              )}
 
-            <button
-              className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-              onClick={
-                currentDiagnosis ? handleUpdateDiagnosis : handleAddDiagnosis
-              }
-            >
-              {currentDiagnosis
-                ? "Atualizar Diagnóstico"
-                : "Salvar Diagnóstico"}
-            </button>
+              <div className={styles.addDiagnosisForm}>
+                <h3>
+                  {currentDiagnosis
+                    ? "Editar Diagnóstico"
+                    : "Adicionar Diagnóstico"}
+                </h3>
+                <label>Descrição</label>
+                <textarea
+                  className={styles.textarea}
+                  value={diagnosisForm.description}
+                  onChange={(e) =>
+                    setDiagnosisForm({
+                      ...diagnosisForm,
+                      description: e.target.value,
+                    })
+                  }
+                ></textarea>
+
+                <label>Medicamentos (separados por vírgula)</label>
+                <input
+                  className={styles.input}
+                  value={diagnosisForm.medications}
+                  onChange={(e) =>
+                    setDiagnosisForm({
+                      ...diagnosisForm,
+                      medications: e.target.value,
+                    })
+                  }
+                />
+
+                <label>Exames (separados por vírgula)</label>
+                <input
+                  className={styles.input}
+                  value={diagnosisForm.exams}
+                  onChange={(e) =>
+                    setDiagnosisForm({
+                      ...diagnosisForm,
+                      exams: e.target.value,
+                    })
+                  }
+                />
+
+                <button
+                  className={styles.saveButton}
+                  onClick={
+                    currentDiagnosis
+                      ? handleUpdateDiagnosis
+                      : handleAddDiagnosis
+                  }
+                >
+                  {currentDiagnosis
+                    ? "Atualizar Diagnóstico"
+                    : "Adicionar Diagnóstico"}
+                </button>
+              </div>
+            </div>
           </div>
         </Modal>
       )}

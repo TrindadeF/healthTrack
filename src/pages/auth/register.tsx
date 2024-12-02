@@ -61,15 +61,17 @@ const RegisterForm = () => {
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/register", {
+      const userData = {
         email: data.email,
         password: data.password,
         name: data.name,
         role: data.role,
+        cpf: data.cpf,
         hospital: data.role === "medico" ? data.hospital : undefined,
-        crm: data.role === "medico" ? data.crm : undefined,
-        cpf: data.role === "paciente" ? data.cpf : undefined,
-      });
+        crm: data.role === "medico" && data.crm ? data.crm : undefined,
+      };
+
+      const response = await api.post("/auth/register", userData);
 
       if (response.status === 201) {
         toast.success("Registro realizado com sucesso!");
@@ -153,19 +155,39 @@ const RegisterForm = () => {
               />
               <p className={styles.errorMessage}>{errors.crm?.message}</p>
             </div>
+            <div className={styles.formField}>
+              <label>CPF</label>
+              <input
+                {...register("cpf")}
+                placeholder="Digite seu CPF"
+                className={styles.input}
+              />
+              <p className={styles.errorMessage}>{errors.cpf?.message}</p>
+            </div>
           </>
         )}
 
         {role === "paciente" && (
-          <div className={styles.formField}>
-            <label>CPF</label>
-            <input
-              {...register("cpf")}
-              placeholder="Digite seu CPF"
-              className={styles.input}
-            />
-            <p className={styles.errorMessage}>{errors.cpf?.message}</p>
-          </div>
+          <>
+            <div className={styles.formField}>
+              <label>CPF</label>
+              <input
+                {...register("cpf")}
+                placeholder="Digite seu CPF"
+                className={styles.input}
+              />
+              <p className={styles.errorMessage}>{errors.cpf?.message}</p>
+            </div>
+            <div className={styles.formField}>
+              <label>Hospital</label>
+              <input
+                {...register("hospital")}
+                placeholder="Digite o nome do hospital em que esta associado"
+                className={styles.input}
+              />
+              <p className={styles.errorMessage}>{errors.hospital?.message}</p>
+            </div>
+          </>
         )}
 
         <button type="submit" className={styles.button} disabled={loading}>

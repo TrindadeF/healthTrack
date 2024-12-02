@@ -6,7 +6,7 @@ import {
   FaSignOutAlt,
   FaBars,
   FaHistory,
-  FaBell,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import styles from "./Sidebar.module.css";
 
@@ -20,10 +20,10 @@ const Sidebar: React.FC = () => {
     user.role === "paciente" ? "/patients/dashboard" : "/doctors/profile";
   const userHistoryRoute =
     user.role === "paciente" ? "/patients/history" : "/doctors/";
-  const userNotificationsRoute =
+  const userAppointmentsRoute =
     user.role === "paciente"
-      ? "/patients/notifications"
-      : "/doctors/notifications";
+      ? "/patients/appointment"
+      : "/doctors/appointments";
 
   return (
     <div className={styles.sidebarContainer}>
@@ -57,10 +57,10 @@ const Sidebar: React.FC = () => {
 
         <div
           className={styles.icon}
-          onClick={() => router.push(userNotificationsRoute)}
+          onClick={() => router.push(userAppointmentsRoute)}
         >
-          <FaBell />
-          <span className={styles.tooltip}>Notificações</span>
+          <FaCalendarAlt />
+          <span className={styles.tooltip}>Consultas</span>
         </div>
 
         <div className={styles.icon} onClick={logout}>
