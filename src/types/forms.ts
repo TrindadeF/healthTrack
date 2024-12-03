@@ -17,7 +17,7 @@ export interface LoginFormData {
 }
 
 export interface Diagnosis {
-  id: string;
+  _id: string;
   description: string;
   date: string;
   medications: string[];

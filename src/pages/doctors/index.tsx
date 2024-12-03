@@ -111,7 +111,7 @@ const DoctorsPage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setDiagnoses(diagnoses.filter((diag) => diag.id !== id));
+      setDiagnoses(diagnoses.filter((diag) => diag._id !== id));
       toast.success("Diagnóstico excluído com sucesso!");
     } catch (err) {
       toast.error("Erro ao excluir diagnóstico.");
@@ -136,7 +136,7 @@ const DoctorsPage = () => {
       }
 
       const response = await api.put(
-        `/diagnoses/${currentDiagnosis.id}`,
+        `/diagnoses/${currentDiagnosis._id}`,
         {
           description: diagnosisForm.description,
           medications: diagnosisForm.medications.split(","),
@@ -147,7 +147,7 @@ const DoctorsPage = () => {
 
       setDiagnoses(
         diagnoses.map((diag) =>
-          diag.id === currentDiagnosis.id ? response.data.diagnosis : diag
+          diag._id === currentDiagnosis._id ? response.data.diagnosis : diag
         )
       );
 
@@ -252,7 +252,7 @@ const DoctorsPage = () => {
                         </button>
                         <button
                           className={`${styles.actionButton} ${styles.deleteButton}`}
-                          onClick={() => handleDeleteDiagnosis(diag.id)}
+                          onClick={() => handleDeleteDiagnosis(diag._id)}
                         >
                           Excluir
                         </button>

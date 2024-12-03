@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from "react";
 import api from "../../services/api";
@@ -5,14 +6,13 @@ import Modal from "@/components/SharedComponents/Modal";
 import { toast, ToastContainer } from "react-toastify";
 
 interface Patient {
-  _id: string;
   id: string;
   name: string;
   email: string;
 }
 
 interface Appointment {
-  id: string;
+  _id: string;
   doctorId: string;
   date: string;
   time: string;
@@ -54,23 +54,23 @@ const DoctorAppointmentsPage = () => {
 
         const appointmentsResponse = await api.get(
           `/appointment/doctor/${doctorId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         console.log("Consultas retornadas:", appointmentsResponse.data);
-        setAppointments(appointmentsResponse.data);
 
-        const patientsResponse = await api.get(`/user/patients`, {
+        const patientsResponse = await api.get("/user/patients", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("Pacientes retornados:", patientsResponse.data);
         setPatients(patientsResponse.data);
+
+        if (!appointmentsResponse.data.every((appt: any) => appt._id)) {
+          console.error("Algumas consultas retornaram sem ID.");
+        }
+
+        setAppointments(appointmentsResponse.data);
       } catch (error) {
         toast.error("Erro ao buscar dados. Tente novamente mais tarde.");
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -106,35 +106,44 @@ const DoctorAppointmentsPage = () => {
       }
 
       const appointmentData = {
-        patientId: selectedPatient,
+        patientId: formData.patientId,
         date: formData.date,
         time: formData.time,
         doctorId,
       };
 
-      if (selectedAppointment) {
+      if (selectedAppointment?._id) {
+        // Verifica se o ID existe
         await api.put(
-          `/appointment/${selectedAppointment.id}`,
+          `/appointment/${selectedAppointment._id}`, // Garante que o ID seja usado na requisição
           appointmentData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
+        // Atualiza a lista de consultas no estado
         setAppointments((prev) =>
           prev.map((appt) =>
-            appt.id === selectedAppointment.id
-              ? { ...appt, ...appointmentData }
+            appt._id === selectedAppointment._id
+              ? { ...appt, ...appointmentData, patientId: selectedPatient }
               : appt
           )
         );
+
         toast.success("Consulta atualizada com sucesso!");
       } else {
+        // Criação de nova consulta
         const response = await api.post(`/appointment/`, appointmentData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log(response.data);
+
         setAppointments((prev) => [
-          { ...response.data.savedAppointment, patientId: selectedPatient },
+          {
+            ...response.data.savedAppointment,
+            patientId: selectedPatient, // Inclui os dados completos do paciente
+          },
           ...prev,
         ]);
+
         toast.success("Consulta criada com sucesso!");
       }
 
@@ -148,6 +157,11 @@ const DoctorAppointmentsPage = () => {
 
   const handleDeleteAppointment = async (id: string) => {
     try {
+      if (!id) {
+        toast.error("ID da consulta inválido.");
+        return;
+      }
+
       const token = localStorage.getItem("token");
       if (!token) {
         toast.error("Usuário não autenticado.");
@@ -158,16 +172,13 @@ const DoctorAppointmentsPage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setAppointments((prev) => prev.filter((appt) => appt.id !== id));
+      setAppointments((prev) => prev.filter((appt) => appt._id !== id));
       toast.success("Consulta excluída com sucesso!");
     } catch (error) {
+      console.error("Erro no DELETE:", error);
       toast.error("Erro ao excluir a consulta.");
     }
   };
-
-  if (loading) {
-    return <p>Carregando...</p>;
-  }
 
   return (
     <div className="container mx-auto p-10">
@@ -191,7 +202,7 @@ const DoctorAppointmentsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {appointments.map((appointment) => (
               <div
-                key={appointment.id}
+                key={appointment._id}
                 className="border rounded-lg p-4 shadow-md"
               >
                 <p>
@@ -213,19 +224,20 @@ const DoctorAppointmentsPage = () => {
                     className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                     onClick={() => {
                       setFormData({
-                        patientId: appointment.patientId.id,
+                        patientId: appointment.patientId.id, // Certifique-se de acessar o ID do paciente corretamente
                         date: appointment.date,
                         time: appointment.time,
                       });
-                      setSelectedAppointment(appointment);
+                      setSelectedAppointment(appointment); // Configura a consulta selecionada
                       setIsModalOpen(true);
                     }}
                   >
                     Editar
                   </button>
+
                   <button
                     className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                    onClick={() => handleDeleteAppointment(appointment.id)}
+                    onClick={() => handleDeleteAppointment(appointment._id)} // Passa o ID diretamente
                   >
                     Excluir
                   </button>
@@ -243,8 +255,8 @@ const DoctorAppointmentsPage = () => {
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
-            setSelectedAppointment(null);
             setFormData({ patientId: "", date: "", time: "" });
+            setSelectedAppointment(null);
           }}
           title={selectedAppointment ? "Editar Consulta" : "Adicionar Consulta"}
         >
